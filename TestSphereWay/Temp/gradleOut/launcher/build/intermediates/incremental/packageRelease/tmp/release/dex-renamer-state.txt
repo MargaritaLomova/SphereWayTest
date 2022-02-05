@@ -1,4 +1,0 @@
-#Sun Jun 13 22:10:02 MSK 2021
-base.0=C\:\\Projects\\TestSphereWay\\Temp\\gradleOut\\launcher\\build\\intermediates\\dex\\release\\out\\classes.dex
-path.0=classes.dex
-renamed.0=classes.dex
