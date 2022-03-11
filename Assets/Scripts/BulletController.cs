@@ -9,28 +9,30 @@ public class BulletController : MonoBehaviour
     private float speedOfTransform;
 
     private Transform door;
+
     private PlayerController player;
     private LevelController levelController;
-    private Rigidbody rb;
-    private Vector3 startPosition;
+    private InputController inputController;
+
     private float percentOfParent;
 
     private void Start()
     {
         levelController = FindObjectOfType<LevelController>();
         player = FindObjectOfType<PlayerController>();
+        inputController = FindObjectOfType<InputController>();
+
         door = FindObjectOfType<DoorController>().GetComponent<Transform>();
-        startPosition = transform.position;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
-        if (player.GetIsScreenTapped())
+        if (inputController.isScreenTapped)
         {
-            //Увеличиваем пулю пока зажат экран
+            //Enlarge the bullet while holding the screen
             StartCoroutine(BulletMagnification());
 
-            //Если пулю перекачали - проигрыш
+            //If the bullet was pumped - a loss
             if (player.transform.localScale.x <= 0.2f)
             {
                 levelController.Losing();
@@ -38,24 +40,15 @@ public class BulletController : MonoBehaviour
         }
         else
         {
-            //Добавляем rigidbody, обновляем стартовый размер игрока
-            if (!rb)
-            {
-                rb = gameObject.AddComponent<Rigidbody>();
-                player.UpdateStartSize();
-            }
+            player.UpdateStartSize();
 
-            //Передвигаем пулю
-            Vector3 movement = -Vector3.MoveTowards(startPosition, door.position, 0);
-            rb.AddForce(movement * Time.deltaTime * speedOfTransform);
+            transform.position = Vector3.MoveTowards(transform.position, door.position, Time.fixedDeltaTime * speedOfTransform);
 
-            //Если пуля истратилась, уничтожаем её
             if (transform.localScale.x < 0.2f)
             {
                 DestroyMyself();
             }
 
-            //Уничтожаем пулю спустя некоторое время
             Invoke("DestroyMyself", 5f);
         }
     }
@@ -65,7 +58,10 @@ public class BulletController : MonoBehaviour
         if (collision.gameObject.CompareTag("Let"))
         {
             var newScale = transform.localScale.x - (transform.localScale.x * (1 - percentOfParent));
-            transform.localScale = new Vector3(newScale, newScale, newScale);
+            if (levelController.isGameInteractable)
+            {
+                transform.localScale = new Vector3(newScale, newScale, newScale);
+            }
         }
     }
 
@@ -77,27 +73,27 @@ public class BulletController : MonoBehaviour
         Destroy(gameObject);
     }
 
+    private void ReducingPlayerSize(float newBulletSize)
+    {
+        var newPlayerSize = player.startSize - newBulletSize;
+        player.transform.localScale = new Vector3(newPlayerSize, newPlayerSize, newPlayerSize);
+        percentOfParent = transform.localScale.x / player.transform.localScale.x;
+        levelController.ReducingWaySize(newPlayerSize * 2);
+    }
+
     private IEnumerator BulletMagnification()
     {
-        while (transform.localScale.x < player.GetStartSize() && player.GetIsScreenTapped())
+        while (transform.localScale.x < player.startSize && inputController.isScreenTapped)
         {
-            if (transform.localScale.x >= (player.GetStartSize() * 0.98f))
+            if (transform.localScale.x >= (player.startSize * 0.98f))
             {
                 speedOfScaling *= 1000;
             }
-            var newScale = Mathf.Lerp(transform.localScale.x, player.GetStartSize(), Time.deltaTime * speedOfScaling);
+            var newScale = Mathf.Lerp(transform.localScale.x, player.startSize, Time.deltaTime * speedOfScaling);
             transform.localScale = new Vector3(newScale, newScale, newScale);
             ReducingPlayerSize(newScale);
             yield return null;
         }
-    }
-
-    private void ReducingPlayerSize(float newBulletSize)
-    {
-        var newPlayerSize = player.GetStartSize() - newBulletSize;
-        player.transform.localScale = new Vector3(newPlayerSize, newPlayerSize, newPlayerSize);
-        percentOfParent = transform.localScale.x / player.transform.localScale.x;
-        levelController.ReducingWaySize(newPlayerSize * 2);
     }
 
     #endregion

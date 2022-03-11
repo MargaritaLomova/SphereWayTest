@@ -1,10 +1,12 @@
-using System;
 using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
+    [Header("Components"), SerializeField]
+    private Rigidbody rb;
+
     [Header("Variables"), SerializeField]
     private float speed = 10f;
 
@@ -14,35 +16,28 @@ public class PlayerController : MonoBehaviour
     [Header("Objects From Scene"), SerializeField]
     private LevelController levelController;
     [SerializeField]
+    private InputController inputController;
+    [SerializeField]
     private Transform door;
 
+    public float startSize { get; private set; }
+
     private bool isCanMove = true;
-    private bool isScreenTapped = false;
     private bool isHaveBulletOnScreen = false;
-    private Rigidbody rb;
-    private float startSize;
+
     private Vector3 startPosition;
 
     private void Start()
     {
         startPosition = transform.position;
         startSize = transform.localScale.x;
-        rb = GetComponent<Rigidbody>();
     }
 
     private void FixedUpdate()
     {
-        if (isCanMove)
+        if (isCanMove && !isHaveBulletOnScreen && inputController.isScreenTapped)
         {
-            if (!isHaveBulletOnScreen && Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Stationary && Input.touches[0].phase != TouchPhase.Began)
-            {
-                isScreenTapped = true;
-                Shoot();
-            }
-            else if (Input.touchCount == 0)
-            {
-                isScreenTapped = false;
-            }
+            Shoot();
         }
     }
 
@@ -58,16 +53,6 @@ public class PlayerController : MonoBehaviour
 
     #region Public
 
-    public bool GetIsScreenTapped()
-    {
-        return isScreenTapped;
-    }
-
-    public float GetStartSize()
-    {
-        return startSize;
-    }
-
     public void BulletWasDestroyed()
     {
         isHaveBulletOnScreen = false;
@@ -75,7 +60,6 @@ public class PlayerController : MonoBehaviour
 
     public void DisableMove()
     {
-        isScreenTapped = false;
         isCanMove = false;
     }
 

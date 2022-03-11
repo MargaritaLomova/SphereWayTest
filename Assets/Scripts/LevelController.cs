@@ -26,6 +26,8 @@ public class LevelController : MonoBehaviour
     [SerializeField]
     private float indentFromPlayerStart;
 
+    public bool isGameInteractable { get; private set; }
+
     private Bounds planeArea;
     private Bounds doorArea;
     private Bounds playerStartArea;
@@ -61,6 +63,8 @@ public class LevelController : MonoBehaviour
 
     public void Losing()
     {
+        isGameInteractable = false;
+
         uiController.ShowLoseText();
         player.DisableMove();
         Invoke("ReloadLevel", 2f);
@@ -72,6 +76,11 @@ public class LevelController : MonoBehaviour
 
     private void ReloadLevel()
     {
+        DestroyAllExistingBullets();
+        DestroyAllExistingLets();
+
+        isGameInteractable = true;
+
         SceneManager.LoadScene(currentScene.buildIndex);
     }
 
